@@ -1,5 +1,4 @@
 <?php
-// Konfigurasi Database
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', 'root');        // MAMP default, ubah ke '' untuk XAMPP
@@ -27,12 +26,13 @@ function getDB() {
     return $db;
 }
 
+$conn = getDB();
+
 // Start session jika belum
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Fungsi cek login
 function isLoggedIn() {
     return isset($_SESSION['user_id']);
 }

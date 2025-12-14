@@ -1,30 +1,50 @@
 <?php
-require_once '../config.php';
-require_once '../crud/user-crud.php';
+error_reporting(0);
+session_start();
 
 // Jika sudah login, redirect ke dashboard
-if (isLoggedIn()) {
-    header('Location: ../index.php');
+if (isset($_SESSION['user']) && isset($_SESSION['level'])) {
+    if ($_SESSION['level'] == 'admin') {
+        header('Location: ../admin/dashboard.php');
+    } else {
+        header('Location: ../user/dashboard.php');
+    }
     exit();
 }
 
-$error = '';
-
 // Proses login
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username'] ?? '');
-    $password = $_POST['password'] ?? '';
+if (isset($_POST['btnlogin'])) {
+    require_once "../config.php";
     
-    if (empty($username) || empty($password)) {
-        $error = 'Username dan password harus diisi';
-    } else {
-        // Coba login
-        if (loginUser($username, $password)) {
-            header('Location: ../index.php');
-            exit();
-        } else {
-            $error = 'Username atau password salah';
+    $user = $_POST['user'];
+    $pass = $_POST['pass'];
+    
+    $sql = "SELECT * FROM users WHERE username = ? AND password = MD5(?)";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ss", $user, $pass);
+    $stmt->execute();
+    $hasil = $stmt->get_result();
+    $ada = $hasil->num_rows;
+    
+    if ($ada > 0) {
+        $data = $hasil->fetch_array();
+        $_SESSION['user'] = $user;
+        $_SESSION['username'] = $user;
+        $_SESSION['level'] = $data['role'];
+        $_SESSION['role'] = $data['role'];
+        $_SESSION['user_id'] = $data['id'];
+        $_SESSION['name'] = $data['name'];
+        
+        if ($_SESSION['level'] == "admin") {
+            echo "<div class='alert alert-success'>Welcome Admin!</div>";
+            header("Location: ../admin/dashboard.php");
+        } elseif ($_SESSION['level'] == "user") {
+            echo "<div class='alert alert-success'>Welcome User!</div>";
+            header("Location: ../user/dashboard.php");
         }
+        exit();
+    } else {
+        echo "<div class='alert alert-danger'>Username or Password is incorrect!</div>";
     }
 }
 ?>
@@ -33,9 +53,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Dompet Sesat</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <title>Login - Dompet kita
+    </title>
+    <link href="../assets/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/bootstrap-icons.css">
     <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body class="login-page">
@@ -45,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="card login-card">
                     <div class="card-header text-center">
                         <h3 class="mb-0">
-                            <i class="bi bi-wallet2"></i> Dompet Sesat
+                            <i class="bi bi-wallet2"></i> Dompet Kita
                         </h3>
                         <small class="text-white">Pencatat Keuangan Anak Kost</small>
                     </div>
@@ -53,34 +74,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="card-body">
                         <h5 class="text-center mb-4">Masuk ke Akun</h5>
                         
-                        <?php if ($error): ?>
-                        <div class="alert alert-danger">
-                            <i class="bi bi-exclamation-triangle"></i> <?php echo $error; ?>
-                        </div>
-                        <?php endif; ?>
+
                         
-                        <form method="POST">
-                            <div class="mb-3">
-                                <label class="form-label">Username</label>
-                                <input type="text" class="form-control" name="username" 
-                                       value="<?php echo htmlspecialchars($_POST['username'] ?? 'rayy'); ?>" required>
+                        <form action="#" method="post">
+                            <div class="input-group mb-3">
+                                <div class="form-floating">
+                                    <input id="loginUser" type="text" name="user" class="form-control" 
+                                           value="" placeholder="" required/>
+                                    <label for="loginUser">Username</label>
+                                </div>
+                                <div class="input-group-text">
+                                    <span class="bi bi-person"></span>
+                                </div>
                             </div>
                             
-                            <div class="mb-3">
-                                <label class="form-label">Password</label>
-                                <input type="password" class="form-control" name="password" 
-                                       value="12345678" required>
+                            <div class="input-group mb-3">
+                                <div class="form-floating">
+                                    <input id="loginPassword" type="password" name="pass" class="form-control" 
+                                           placeholder="" required />
+                                    <label for="loginPassword">Password</label>
+                                </div>
+                                <div class="input-group-text">
+                                    <span class="bi bi-lock-fill"></span>
+                                </div>
                             </div>
                             
-                            <div class="d-grid">
-                                <button type="submit" class="btn btn-primary btn-lg">
-                                    <i class="bi bi-box-arrow-in-right"></i> Masuk
-                                </button>
+                            <!--begin::Row-->
+                            <div class="row">
+                                <div class="col-8 d-inline-flex align-items-center">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault" />
+                                        <label class="form-check-label" for="flexCheckDefault">
+                                            Remember Me
+                                        </label>
+                                    </div>
+                                </div>
+                                <!-- /.col -->
+                                <div class="col-4">
+                                    <div class="d-grid gap-2">
+                                        <input type="submit" class="btn btn-primary" value="Sign In" name="btnlogin" />
+                                    </div>
+                                </div>
                             </div>
                         </form>
                         
                         <hr>
-                        
+
                         <div class="text-center">
                             <p class="text-muted">Belum punya akun?</p>
                             <a href="register.php" class="btn btn-outline-primary">
@@ -93,6 +132,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
     
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../assets/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -2,17 +2,16 @@
 require_once '../config.php';
 require_once '../crud/user-crud.php';
 require_once '../crud/transaction-crud.php';
+require_once '../crud/category-crud.php';
 
 requireLogin();
 
-// Redirect admin ke dashboard admin
-if (isAdmin()) {
-    header('Location: ../admin/dashboard.php');
-    exit();
-}
-
 $user_id = $_SESSION['user_id'];
-$transaction_id = (int)($_GET['id'] ?? 0);
+if (isset($_GET['id'])) {
+    $transaction_id = $_GET['id'];
+} else {
+    $transaction_id = 0;
+}
 
 // Ambil data transaksi
 $transaction = getTransaction($transaction_id, $user_id);
@@ -23,26 +22,29 @@ if (!$transaction) {
     exit();
 }
 
+// Ambil semua kategori untuk dropdown
+$categories = getAllCategories($user_id);
+
 // Proses form edit
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $type = $_POST['type'] ?? 'expense';
-    $description = trim($_POST['description'] ?? '');
-    $amount = (float)($_POST['amount'] ?? 0);
-    $category = trim($_POST['category'] ?? '');
-    $date = $_POST['date'] ?? date('Y-m-d');
-    $notes = trim($_POST['notes'] ?? '');
+if (isset($_POST['btnedit'])) {
+    $type = $_POST['type'];
+    $description = $_POST['description'];
+    $amount = $_POST['amount'];
+    $category = $_POST['category'];
+    $date = $_POST['date'];
+    $notes = $_POST['notes'];
     
     // Validasi
     if (empty($description) || $amount <= 0 || empty($category)) {
-        $error = 'Semua field wajib harus diisi';
+        echo "<div class='alert alert-danger'>Semua field wajib harus diisi!</div>";
     } else {
         // Update transaksi
         if (updateTransaction($transaction_id, $user_id, $type, $description, $amount, $category, $date, $notes)) {
-            $_SESSION['success'] = 'Transaksi berhasil diperbarui!';
+            echo "<div class='alert alert-success'>Transaksi berhasil diperbarui!</div>";
             header('Location: transactions.php');
             exit();
         } else {
-            $error = 'Gagal memperbarui transaksi';
+            echo "<div class='alert alert-danger'>Gagal memperbarui transaksi!</div>";
         }
     }
 }
@@ -50,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Set page title
 $page_title = 'Edit Transaksi';
 
-// Include header dan sidebar
+// Ngmabil header dan sidebar
 include '../includes/header.php';
 include '../includes/sidebar.php';
 ?>
@@ -67,12 +69,6 @@ include '../includes/sidebar.php';
                 </a>
             </div>
             <div class="card-body">
-                <?php if (isset($error)): ?>
-                <div class="alert alert-danger">
-                    <i class="bi bi-exclamation-triangle"></i> <?php echo $error; ?>
-                </div>
-                <?php endif; ?>
-
                 <form method="POST">
                     <!-- Tipe Transaksi -->
                     <div class="mb-3">
@@ -115,6 +111,13 @@ include '../includes/sidebar.php';
                         <label class="form-label">Kategori</label>
                         <select class="form-select" name="category" id="category" required>
                             <option value="">Pilih kategori</option>
+                            <?php foreach ($categories as $cat): ?>
+                            <option value="<?php echo $cat['id']; ?>" 
+                                    data-type="<?php echo $cat['type']; ?>"
+                                    <?php echo $cat['id'] == $transaction['category_id'] ? 'selected' : ''; ?>>
+                                <?php echo $cat['icon'] . ' ' . htmlspecialchars($cat['name']); ?>
+                            </option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
 
@@ -129,11 +132,15 @@ include '../includes/sidebar.php';
                     <div class="mb-3">
                         <label class="form-label">Catatan (opsional)</label>
                         <textarea class="form-control" name="notes" rows="2" 
-                                  placeholder="Catatan tambahan..."><?php echo htmlspecialchars($transaction['notes'] ?? ''); ?></textarea>
+                                  placeholder="Catatan tambahan..."><?php 
+                                  if (isset($transaction['notes'])) {
+                                      echo htmlspecialchars($transaction['notes']);
+                                  }
+                                  ?></textarea>
                     </div>
 
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary flex-fill">
+                        <button type="submit" name="btnedit" class="btn btn-primary flex-fill">
                             <i class="bi bi-check"></i> Simpan Perubahan
                         </button>
                         <a href="transactions.php" class="btn btn-secondary">
@@ -147,12 +154,12 @@ include '../includes/sidebar.php';
 </div>
 
 <?php
-// Set custom scripts untuk halaman ini
+// custom scripts untuk halaman ini
 $custom_scripts = '
     // Load kategori saat halaman dimuat
     document.addEventListener("DOMContentLoaded", function() {
         const currentType = "' . $transaction['type'] . '";
-        const currentCategory = "' . htmlspecialchars($transaction['category_name']) . '";
+        const currentCategory = "' . $transaction['category_id'] . '";
         
         filterCategories(currentType);
         

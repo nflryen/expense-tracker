@@ -1,4 +1,3 @@
-<!-- Modal Tambah Transaksi -->
 <div class="modal fade" id="addModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -94,8 +93,3 @@
         </div>
     </div>
 </div>
-<?php
-$redirect = $_SERVER['HTTP_REFERER'] ?? 'dashboard.php';
-header('Location: ' . $redirect);
-exit();
-?>

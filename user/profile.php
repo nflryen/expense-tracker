@@ -5,12 +5,6 @@ require_once '../crud/transaction-crud.php';
 
 requireLogin();
 
-// Redirect admin ke dashboard admin
-if (isAdmin()) {
-    header('Location: ../admin/profile.php');
-    exit();
-}
-
 $user_id = $_SESSION['user_id'];
 
 // Ambil data user
@@ -106,10 +100,9 @@ $stmt->execute();
 $result = $stmt->get_result()->fetch_assoc();
 $total_transactions = $result['count'];
 
-// Set page title
 $page_title = 'Profil Saya';
 
-// Include header dan sidebar
+// Ngambil header dan sidebar
 include '../includes/header.php';
 include '../includes/sidebar.php';
 ?>
@@ -284,7 +277,7 @@ include '../includes/sidebar.php';
 </div>
 
 <?php
-// Include modal dan footer
+// Ngambil modal dan footer
 include '../includes/modals/add-transaction-modal.php';
 include '../includes/footer.php';
 ?>

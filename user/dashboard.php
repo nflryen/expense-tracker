@@ -6,12 +6,6 @@ require_once '../crud/category-crud.php';
 
 requireLogin();
 
-// Redirect admin ke dashboard admin
-if (isAdmin()) {
-    header('Location: ../admin/dashboard.php');
-    exit();
-}
-
 $user_id = $_SESSION['user_id'];
 $username = $_SESSION['username'];
 
@@ -21,11 +15,11 @@ $recent_transactions = getRecentTransactions($user_id, 3);
 $category_breakdown = getCategoryBreakdown($user_id);
 
 // Hitung balance
-$total_income = $stats['total_income'] ?? 0;
-$total_expense = $stats['total_expense'] ?? 0;
+$total_income = $stats['total_income'];
+$total_expense = $stats['total_expense'];
 $balance = $total_income - $total_expense;
 
-// Data untuk chart (sederhana)
+// Data untuk chart
 $chart_labels = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
 $chart_data = [];
 
@@ -36,11 +30,10 @@ for ($i = 0; $i < 7; $i++) {
 }
 $chart_data[6] = $balance; // Hari terakhir = balance sekarang
 
-// Set page title dan additional CSS/JS
 $page_title = 'Dashboard';
-$additional_css = '<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>';
+$additional_css = '<script src="../assets/js/chart.min.js"></script>';
 
-// Include header dan sidebar
+// Nangmbil header dan sidebar
 include '../includes/header.php';
 include '../includes/sidebar.php';
 ?>
@@ -168,8 +161,6 @@ include '../includes/sidebar.php';
                 <?php endif; ?>
             </div>
         </div>
-
-        <!-- Chart Balance (Dipindah ke bawah) -->
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">Grafik Saldo Minggu Ini</h5>
@@ -213,10 +204,10 @@ include '../includes/sidebar.php';
 </div>
 
 <?php
-// Include modal dan footer
+// Ngambil modal dan footer
 include '../includes/modals/add-transaction-modal.php';
 
-// Set custom scripts untuk halaman ini
+// custom scripts untuk halaman ini
 $custom_scripts = '
     // Data chart dari PHP
     const chartLabels = ' . json_encode($chart_labels) . ';

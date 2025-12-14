@@ -1,13 +1,9 @@
 <?php
-// Config will be included by the calling file
-
-// ========== CATEGORY CRUD OPERATIONS ==========
-
-// Ambil semua kategori user (termasuk default)
+// Ambil semua kategori user
 function getAllCategories($user_id, $type = null) {
     $db = getDB();
     
-    $where = "WHERE (user_id = ? OR is_default = TRUE)";
+    $where = "WHERE (user_id = ? OR is_default = TRUE) AND name IS NOT NULL AND name != ''";
     $params = [$user_id];
     $types = "i";
     
@@ -65,10 +61,9 @@ function updateCategory($id, $user_id, $name, $icon, $color, $type) {
     $result = $stmt->get_result()->fetch_assoc();
     
     if (!$result || $result['is_default']) {
-        return false; // Tidak bisa edit kategori default atau milik orang lain
+        return false;
     }
     
-    // Cek duplikasi nama (kecuali untuk kategori yang sedang diedit)
     $stmt = $db->prepare("SELECT id FROM categories WHERE name = ? AND (user_id = ? OR is_default = TRUE) AND type = ? AND id != ?");
     $stmt->bind_param("sisi", $name, $user_id, $type, $id);
     $stmt->execute();

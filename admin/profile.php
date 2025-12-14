@@ -7,10 +7,8 @@ requireAdmin();
 
 $user_id = $_SESSION['user_id'];
 
-// Ambil data admin
 $admin = getUserById($user_id);
 
-// Proses form update
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     
@@ -58,13 +56,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit();
 }
 
-// Ambil statistik admin
 $global_stats = getGlobalStats();
 
-// Set page title
 $page_title = 'Profil Admin';
 
-// Include header dan admin sidebar
+// Ngambil header dan admin sidebar
 include '../includes/header.php';
 include '../includes/admin-sidebar.php';
 ?>
@@ -212,7 +208,7 @@ include '../includes/admin-sidebar.php';
             </div>
         </div>
 
-        <!-- Admin Actions -->
+        <!-- Aksi dmin -->
         <div class="card">
             <div class="card-header">
                 <h5 class="mb-0">

@@ -11,12 +11,11 @@ $search = $_GET['search'] ?? '';
 $type = $_GET['type'] ?? '';
 $user_filter = $_GET['user'] ?? '';
 
-// Build filters
 $filters = [];
 if (!empty($search)) $filters['search'] = $search;
 if (!empty($type)) $filters['type'] = $type;
 
-// Ambil semua transaksi (modifikasi query untuk admin)
+// Ambil semua transaksi
 $db = getDB();
 
 $where = "WHERE 1=1";
@@ -66,7 +65,6 @@ if (!empty($params)) {
     $total = $db->query($count_query)->fetch_assoc()['total'];
 }
 
-// Ambil data dengan pagination
 $per_page = 20;
 $query = "
     SELECT t.*, c.name as category_name, c.icon as category_icon, c.color as category_color,
@@ -112,7 +110,6 @@ $stats_query = "
 ";
 
 if (!empty($params)) {
-    // Remove LIMIT and OFFSET for stats
     $stats_params = array_slice($params, 0, -2);
     $stats_types = substr($types, 0, -2);
     
@@ -291,7 +288,6 @@ include '../includes/admin-sidebar.php';
     </div>
 </div>
 
-<!-- Pagination -->
 <?php if ($total_pages > 1): ?>
 <nav class="mt-4">
     <ul class="pagination justify-content-center">

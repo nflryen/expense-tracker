@@ -12,29 +12,40 @@ $error = '';
 $success = '';
 
 // Proses registrasi
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username'] ?? '');
-    $email = trim($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
-    $confirm_password = $_POST['confirm_password'] ?? '';
+if (isset($_POST['btnregister'])) {
+    require_once "../config.php";
+    
+    $username = $_POST['username'];
+    $name = $_POST['name'];
+    $email = $_POST['email'];
+    $password = $_POST['password'];
+    $confirm_password = $_POST['confirm_password'];
     
     // Validasi input
-    if (empty($username) || empty($email) || empty($password)) {
-        $error = 'Semua field harus diisi';
+    if (empty($username) || empty($name) || empty($email) || empty($password)) {
+        echo "<div class='alert alert-danger'>Semua field harus diisi!</div>";
     } elseif (strlen($username) < 3) {
-        $error = 'Username minimal 3 karakter';
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $error = 'Format email tidak valid';
+        echo "<div class='alert alert-danger'>Username minimal 3 karakter!</div>";
     } elseif (strlen($password) < 6) {
-        $error = 'Password minimal 6 karakter';
-    } elseif ($password !== $confirm_password) {
-        $error = 'Konfirmasi password tidak cocok';
+        echo "<div class='alert alert-danger'>Password minimal 6 karakter!</div>";
+    } elseif ($password != $confirm_password) {
+        echo "<div class='alert alert-danger'>Konfirmasi password tidak cocok!</div>";
     } else {
-        // Coba registrasi
-        if (registerUser($username, $email, $password)) {
-            $success = 'Registrasi berhasil! Silakan login.';
+        // Cek apakah username atau email sudah ada
+        $check_sql = "SELECT id FROM users WHERE username = '$username' OR email = '$email'";
+        $result = $conn->query($check_sql);
+        
+        if ($result->num_rows > 0) {
+            echo "<div class='alert alert-danger'>Username atau email sudah digunakan!</div>";
         } else {
-            $error = 'Username atau email sudah digunakan';
+            // Insert user baru
+            $insert_sql = "INSERT INTO users (username, name, email, password, role) VALUES ('$username', '$name', '$email', MD5('$password'), 'user')";
+            
+            if ($conn->query($insert_sql)) {
+                echo "<div class='alert alert-success'>Registrasi berhasil! <a href='login.php'>Silakan login</a></div>";
+            } else {
+                echo "<div class='alert alert-danger'>Terjadi kesalahan saat registrasi!</div>";
+            }
         }
     }
 }
@@ -45,8 +56,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daftar - Dompet Sesat</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="../assets/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/bootstrap-icons.css">
     <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body class="login-page">
@@ -85,6 +96,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
                             
                             <div class="mb-3">
+                                <label class="form-label">Nama Lengkap</label>
+                                <input type="text" class="form-control" name="name" 
+                                       value="<?php echo htmlspecialchars($_POST['name'] ?? ''); ?>" 
+                                       placeholder="Nama lengkap Anda" required>
+                            </div>
+                            
+                            <div class="mb-3">
                                 <label class="form-label">Email</label>
                                 <input type="email" class="form-control" name="email" 
                                        value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>" 
@@ -104,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
                             
                             <div class="d-grid">
-                                <button type="submit" class="btn btn-primary btn-lg">
+                                <button type="submit" name="btnregister" class="btn btn-primary btn-lg">
                                     <i class="bi bi-person-plus"></i> Daftar
                                 </button>
                             </div>
@@ -124,6 +142,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
     
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../assets/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

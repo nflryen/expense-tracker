@@ -1,9 +1,5 @@
 <?php
-// Config will be included by the calling file
 
-// ========== USER CRUD OPERATIONS ==========
-
-// Registrasi user baru
 function registerUser($username, $email, $password) {
     $db = getDB();
     
@@ -13,7 +9,7 @@ function registerUser($username, $email, $password) {
     $stmt->execute();
     
     if ($stmt->get_result()->num_rows > 0) {
-        return false; // Username atau email sudah ada
+        return false;
     }
     
     // Hash password
@@ -61,7 +57,7 @@ function updateUserProfile($user_id, $username, $email, $monthly_budget) {
     $stmt->execute();
     
     if ($stmt->get_result()->num_rows > 0) {
-        return false; // Username atau email sudah digunakan
+        return false;
     }
     
     $stmt = $db->prepare("UPDATE users SET username = ?, email = ?, monthly_budget = ? WHERE id = ?");
@@ -133,7 +129,6 @@ function getUserStats($user_id) {
     return $stats;
 }
 
-// Helper functions
 function isAdmin() {
     return isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
 }

@@ -1,8 +1,4 @@
 <?php
-
-// ========== ADMIN CRUD OPERATIONS ==========
-
-// Require admin access
 function requireAdmin() {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
@@ -47,7 +43,6 @@ function getAllUsers($page = 1, $per_page = 20, $search = '') {
         $total = $db->query($count_query)->fetch_assoc()['total'];
     }
     
-    // Ambil data dengan pagination
     $query = "
         SELECT id, username, email, role, monthly_budget, created_at,
                (SELECT COUNT(*) FROM transactions WHERE user_id = users.id) as transaction_count,
@@ -209,7 +204,7 @@ function getRecentTransactionsGlobal($limit = 10) {
     return $transactions;
 }
 
-// Ambil semua transaksi global dengan filter (admin)
+// Ambil semua transaksi
 function getAllTransactionsGlobal($filters = [], $page = 1, $per_page = 20) {
     $db = getDB();
     
@@ -260,7 +255,6 @@ function getAllTransactionsGlobal($filters = [], $page = 1, $per_page = 20) {
         $total = $db->query($count_query)->fetch_assoc()['total'];
     }
     
-    // Ambil data dengan pagination
     $query = "
         SELECT t.*, c.name as category_name, c.icon as category_icon, c.color as category_color,
                u.username, u.email

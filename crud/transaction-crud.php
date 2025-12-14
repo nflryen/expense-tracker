@@ -14,32 +14,28 @@ function addTransaction($user_id, $type, $description, $amount, $category, $date
         return false;
     }
     
-    $stmt = $db->prepare("INSERT INTO transactions (user_id, category_id, type, description, amount, date, notes) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("iissdss", $user_id, $category_id, $type, $description, $amount, $date, $notes);
+    $sql = "INSERT INTO transactions (user_id, category_id, type, description, amount, date, notes) VALUES ('$user_id', '$category_id', '$type', '$description', '$amount', '$date', '$notes')";
+    $result = $db->query($sql);
     
-    return $stmt->execute();
+    return $result;
 }
 
 // Update transaksi
-function updateTransaction($id, $user_id, $type, $description, $amount, $category, $date, $notes = '') {
+function updateTransaction($id, $user_id, $type, $description, $amount, $category_id, $date, $notes = '') {
     $db = getDB();
     
-    // Get atau buat kategori
-    $category_id = getOrCreateCategory($user_id, $category, $type);
-    
-    if (!$category_id) {
-        return false;
+    // Jika category_id adalah string (nama kategori), convert ke ID
+    if (!is_numeric($category_id)) {
+        $category_id = getOrCreateCategory($user_id, $category_id, $type);
+        if (!$category_id) {
+            return false;
+        }
     }
     
-    $stmt = $db->prepare("
-        UPDATE transactions 
-        SET category_id = ?, type = ?, description = ?, amount = ?, date = ?, notes = ?
-        WHERE id = ? AND user_id = ?
-    ");
+    $sql = "UPDATE transactions SET category_id = '$category_id', type = '$type', description = '$description', amount = '$amount', date = '$date', notes = '$notes' WHERE id = '$id' AND user_id = '$user_id'";
+    $result = $db->query($sql);
     
-    $stmt->bind_param("issdssii", $category_id, $type, $description, $amount, $date, $notes, $id, $user_id);
-    
-    return $stmt->execute();
+    return $result;
 }
 
 // Hapus transaksi
@@ -52,7 +48,7 @@ function deleteTransaction($id, $user_id) {
     return $stmt->execute();
 }
 
-// Ambil semua transaksi user dengan filter dan pagination
+// Ambil semua transaksi user
 function getTransactions($user_id, $filters = [], $page = 1, $per_page = 20) {
     $db = getDB();
     
@@ -103,7 +99,6 @@ function getTransactions($user_id, $filters = [], $page = 1, $per_page = 20) {
     $count_stmt->execute();
     $total = $count_stmt->get_result()->fetch_assoc()['total'];
     
-    // Ambil data dengan pagination
     $query = "
         SELECT t.*, c.name as category_name, c.icon as category_icon, c.color as category_color 
         FROM transactions t
@@ -240,7 +235,6 @@ function getCategoryBreakdown($user_id, $month = null, $year = null) {
 function getOrCreateCategory($user_id, $category_name, $type) {
     $db = getDB();
     
-    // Cari kategori yang sudah ada (milik user atau default)
     $stmt = $db->prepare("SELECT id FROM categories WHERE name = ? AND type = ? AND (user_id = ? OR is_default = TRUE) LIMIT 1");
     $stmt->bind_param("ssi", $category_name, $type, $user_id);
     $stmt->execute();
@@ -264,7 +258,6 @@ function getOrCreateCategory($user_id, $category_name, $type) {
     return false;
 }
 
-// Default category helpers
 function getCategoryColor($category_name) {
     $colors = [
         'Makan' => '#4361ee',

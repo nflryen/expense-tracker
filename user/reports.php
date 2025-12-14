@@ -5,12 +5,6 @@ require_once '../crud/transaction-crud.php';
 
 requireLogin();
 
-// Redirect admin ke dashboard admin
-if (isAdmin()) {
-    header('Location: ../admin/dashboard.php');
-    exit();
-}
-
 $user_id = $_SESSION['user_id'];
 
 // Ambil parameter filter
@@ -49,7 +43,7 @@ for ($i = 0; $i < 5; $i++) {
 // Set page title
 $page_title = 'Laporan Keuangan';
 
-// Include header dan sidebar
+// Ngambil header dan sidebar
 include '../includes/header.php';
 include '../includes/sidebar.php';
 ?>
@@ -106,7 +100,6 @@ include '../includes/sidebar.php';
     </div>
 </div>
 
-<!-- Ringkasan -->
 <div class="row mb-4">
     <div class="col-md-3">
         <div class="card stat-card income-card">

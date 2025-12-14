@@ -14,18 +14,36 @@ if (isAdmin()) {
 $user_id = $_SESSION['user_id'];
 $username = $_SESSION['username'];
 
-// Ambil filter dari URL
 $filters = [];
-$page = (int)($_GET['page'] ?? 1);
-$search = $_GET['search'] ?? '';
-$type = $_GET['type'] ?? '';
-$month = $_GET['month'] ?? '';
-$year = $_GET['year'] ?? '';
+$page = 1;
+$search = '';
+$type = '';
+$month = '';
+$year = '';
 
-if (!empty($search)) $filters['search'] = $search;
-if (!empty($type)) $filters['type'] = $type;
-if (!empty($month)) $filters['month'] = $month;
-if (!empty($year)) $filters['year'] = $year;
+if (isset($_GET['page'])) {
+    $page = $_GET['page'];
+}
+
+if (isset($_GET['search'])) {
+    $search = $_GET['search'];
+    $filters['search'] = $search;
+}
+
+if (isset($_GET['type'])) {
+    $type = $_GET['type'];
+    $filters['type'] = $type;
+}
+
+if (isset($_GET['month'])) {
+    $month = $_GET['month'];
+    $filters['month'] = $month;
+}
+
+if (isset($_GET['year'])) {
+    $year = $_GET['year'];
+    $filters['year'] = $year;
+}
 
 // Ambil data transaksi
 $result = getTransactions($user_id, $filters, $page, 15);
@@ -33,30 +51,32 @@ $transactions = $result['data'];
 $total_pages = $result['total_pages'];
 
 // Hapus transaksi jika diminta
-if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
-    $delete_id = (int)$_GET['delete'];
+if (isset($_GET['delete'])) {
+    $delete_id = $_GET['delete'];
     if (deleteTransaction($delete_id, $user_id)) {
-        $_SESSION['success'] = 'Transaksi berhasil dihapus';
+        echo "<div class='alert alert-success'>Transaksi berhasil dihapus!</div>";
     } else {
-        $_SESSION['error'] = 'Gagal menghapus transaksi';
+        echo "<div class='alert alert-danger'>Gagal menghapus transaksi!</div>";
     }
-    
-    // Redirect untuk menghindari delete ulang
-    $redirect_url = 'transactions.php';
-    if (!empty($_GET)) {
-        unset($_GET['delete']);
-        if (!empty($_GET)) {
-            $redirect_url .= '?' . http_build_query($_GET);
-        }
-    }
-    header("Location: $redirect_url");
-    exit();
 }
 
 // Hitung total untuk statistik
-$stats = getMonthlyStats($user_id, $month ?: null, $year ?: null);
-$total_income = $stats['total_income'] ?? 0;
-$total_expense = $stats['total_expense'] ?? 0;
+if ($month && $year) {
+    $stats = getMonthlyStats($user_id, $month, $year);
+} else {
+    $stats = getMonthlyStats($user_id);
+}
+if (isset($stats['total_income'])) {
+    $total_income = $stats['total_income'];
+} else {
+    $total_income = 0;
+}
+
+if (isset($stats['total_expense'])) {
+    $total_expense = $stats['total_expense'];
+} else {
+    $total_expense = 0;
+}
 
 // Daftar bulan dan tahun untuk filter
 $months = [
@@ -70,7 +90,6 @@ for ($i = 0; $i < 5; $i++) {
     $years[] = date('Y') - $i;
 }
 
-// Helper function untuk pagination
 function buildPageUrl($page, $params) {
     $params['page'] = $page;
     return 'transactions.php?' . http_build_query($params);
@@ -79,7 +98,7 @@ function buildPageUrl($page, $params) {
 // Set page title
 $page_title = 'Semua Transaksi';
 
-// Include header dan sidebar
+// Ngambil header dan sidebar
 include '../includes/header.php';
 include '../includes/sidebar.php';
 ?>
@@ -265,7 +284,6 @@ include '../includes/sidebar.php';
     </div>
 </div>
 
-<!-- Pagination -->
 <?php if ($total_pages > 1): ?>
 <nav class="mt-4">
     <ul class="pagination justify-content-center">
@@ -296,10 +314,10 @@ include '../includes/sidebar.php';
 <?php endif; ?>
 
 <?php
-// Include modal dan footer
+// Ngambil modal dan footer
 include '../includes/modals/add-transaction-modal.php';
 
-// Set custom scripts untuk halaman ini
+// custom scripts untuk halaman ini
 $custom_scripts = '
     function confirmDelete(id) {
         if (confirm("Yakin ingin menghapus transaksi ini?\\nTindakan ini tidak dapat dibatalkan.")) {

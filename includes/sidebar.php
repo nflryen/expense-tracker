@@ -1,5 +1,4 @@
 <?php
-// Tentukan halaman aktif berdasarkan nama file
 $current_page = basename($_SERVER['PHP_SELF'], '.php');
 ?>
 <div class="container-fluid">

@@ -5,14 +5,13 @@ require_once '../crud/user-crud.php';
 
 requireAdmin();
 
-// Ambil statistik global
+// ngambil statistik global
 $stats = getGlobalStats();
 $recent_transactions = getRecentTransactionsGlobal(8);
 
-// Set page title
 $page_title = 'Admin Dashboard';
 
-// Include header dan admin sidebar
+// ngambil header dan admin sidebar
 include '../includes/header.php';
 include '../includes/admin-sidebar.php';
 ?>
@@ -24,7 +23,7 @@ include '../includes/admin-sidebar.php';
             <i class="bi bi-shield-check text-warning me-2"></i>
             Admin Dashboard
         </h1>
-        <p class="text-muted mb-0">Overview sistem Dompet Sesat</p>
+        <p class="text-muted mb-0">Overview sistem Dompet Kita</p>
     </div>
     <div class="d-flex gap-2">
         <a href="users.php" class="btn btn-outline-primary">
@@ -155,7 +154,7 @@ include '../includes/admin-sidebar.php';
         </div>
     </div>
 
-    <!-- Kategori Populer -->
+    <!-- Kategori yg sering -->
     <div class="col-lg-4">
         <div class="card">
             <div class="card-header">

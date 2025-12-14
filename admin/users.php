@@ -5,51 +5,47 @@ require_once '../crud/user-crud.php';
 
 requireAdmin();
 
-// Proses actions
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = $_POST['action'] ?? '';
+if (isset($_POST['btnupdate'])) {
+    $user_id = $_POST['user_id'];
+    $role = $_POST['role'];
     
-    if ($action === 'update_role') {
-        $user_id = (int)($_POST['user_id'] ?? 0);
-        $role = $_POST['role'] ?? '';
-        
-        if (updateUserRole($user_id, $role)) {
-            $_SESSION['success'] = 'Role user berhasil diperbarui';
-        } else {
-            $_SESSION['error'] = 'Gagal memperbarui role user';
-        }
+    if (updateUserRole($user_id, $role)) {
+        echo "<div class='alert alert-success'>Role user berhasil diperbarui!</div>";
+    } else {
+        echo "<div class='alert alert-danger'>Gagal memperbarui role user!</div>";
     }
-    
-    header('Location: users.php');
-    exit();
 }
 
-// Proses delete
 if (isset($_GET['delete'])) {
-    $user_id = (int)$_GET['delete'];
+    $user_id = $_GET['delete'];
     if (deleteUser($user_id)) {
-        $_SESSION['success'] = 'User berhasil dihapus';
+        echo "<div class='alert alert-success'>User berhasil dihapus!</div>";
     } else {
-        $_SESSION['error'] = 'Gagal menghapus user. Kemungkinan: user tidak ditemukan, mencoba hapus diri sendiri, atau mencoba hapus admin terakhir.';
+        echo "<div class='alert alert-danger'>Gagal menghapus user!</div>";
     }
-    
-    header('Location: users.php');
-    exit();
 }
 
 // Ambil parameter
-$page = (int)($_GET['page'] ?? 1);
-$search = $_GET['search'] ?? '';
+if (isset($_GET['page'])) {
+    $page = $_GET['page'];
+} else {
+    $page = 1;
+}
+
+if (isset($_GET['search'])) {
+    $search = $_GET['search'];
+} else {
+    $search = '';
+}
 
 // Ambil data users
 $result = getAllUsers($page, 15, $search);
 $users = $result['data'];
 $total_pages = $result['total_pages'];
 
-// Set page title
 $page_title = 'Kelola Users - Admin';
 
-// Include header dan admin sidebar
+// Ngambil header dan admin sidebar
 include '../includes/header.php';
 include '../includes/admin-sidebar.php';
 ?>
@@ -216,11 +212,9 @@ include '../includes/admin-sidebar.php';
     </div>
 </div>
 
-<!-- Pagination -->
 <?php if ($total_pages > 1): ?>
 <nav class="mt-4">
     <ul class="pagination justify-content-center">
-        <!-- Previous -->
         <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
             <a class="page-link" href="?page=<?php echo $page - 1; ?>&search=<?php echo urlencode($search); ?>">
                 <i class="bi bi-chevron-left"></i>

@@ -6,7 +6,6 @@ require_once '../crud/category-crud.php';
 
 requireLogin();
 
-// Redirect admin ke dashboard admin
 if (isAdmin()) {
     header('Location: ../admin/dashboard.php');
     exit();
@@ -15,31 +14,25 @@ if (isAdmin()) {
 $user_id = $_SESSION['user_id'];
 
 // Proses form tambah transaksi
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $type = $_POST['type'] ?? 'expense';
-    $description = trim($_POST['description'] ?? '');
-    $amount = (float)($_POST['amount'] ?? 0);
-    $category = trim($_POST['category'] ?? '');
-    $date = $_POST['date'] ?? date('Y-m-d');
-    $notes = trim($_POST['notes'] ?? '');
+if (isset($_POST['btnadd'])) {
+    $type = $_POST['type'];
+    $description = $_POST['description'];
+    $amount = $_POST['amount'];
+    $category = $_POST['category'];
+    $date = $_POST['date'];
+    $notes = $_POST['notes'];
     
     // Validasi
     if (empty($description) || $amount <= 0 || empty($category)) {
-        $_SESSION['error'] = 'Semua field wajib harus diisi';
+        echo "<div class='alert alert-danger'>Semua field wajib harus diisi!</div>";
     } else {
         // Tambah transaksi
         if (addTransaction($user_id, $type, $description, $amount, $category, $date, $notes)) {
-            $_SESSION['success'] = 'Transaksi berhasil ditambahkan!';
+            echo "<div class='alert alert-success'>Transaksi berhasil ditambahkan!</div>";
+            header('Location: dashboard.php');
         } else {
-            $_SESSION['error'] = 'Gagal menambahkan transaksi';
+            echo "<div class='alert alert-danger'>Gagal menambahkan transaksi!</div>";
         }
     }
-} else {
-    $_SESSION['error'] = 'Method tidak valid';
 }
-
-// Redirect kembali ke halaman sebelumnya atau dashboard
-$redirect = $_SERVER['HTTP_REFERER'] ?? 'dashboard.php';
-header('Location: ' . $redirect);
-exit();
 ?>

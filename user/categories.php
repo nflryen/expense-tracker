@@ -5,15 +5,9 @@ require_once '../crud/category-crud.php';
 
 requireLogin();
 
-// Redirect admin ke dashboard admin
-if (isAdmin()) {
-    header('Location: ../admin/dashboard.php');
-    exit();
-}
 
 $user_id = $_SESSION['user_id'];
 
-// Proses form actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     
@@ -77,10 +71,9 @@ $usage_stats = getCategoryUsage($user_id);
 $income_categories = array_filter($categories, fn($cat) => $cat['type'] === 'income');
 $expense_categories = array_filter($categories, fn($cat) => $cat['type'] === 'expense');
 
-// Set page title
 $page_title = 'Kelola Kategori';
 
-// Include header dan sidebar
+// Ngambil header dan sidebar
 include '../includes/header.php';
 include '../includes/sidebar.php';
 ?>
@@ -365,7 +358,7 @@ include '../includes/sidebar.php';
 </div>
 
 <?php
-// Set custom scripts untuk halaman ini
+// custom scripts untuk halaman ini
 $custom_scripts = '
     // Edit kategori
     function editCategory(category) {
