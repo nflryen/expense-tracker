@@ -2,10 +2,10 @@
 require_once '../config.php';
 require_once '../crud/user-crud.php';
 require_once '../crud/transaction-crud.php';
+require_once '../crud/category-crud.php';
 
 requireLogin();
 
-// Redirect admin ke dashboard admin
 if (isAdmin()) {
     header('Location: ../admin/dashboard.php');
     exit();
@@ -45,7 +45,6 @@ if (isset($_GET['year'])) {
     $filters['year'] = $year;
 }
 
-// Ambil data transaksi
 $result = getTransactions($user_id, $filters, $page, 15);
 $transactions = $result['data'];
 $total_pages = $result['total_pages'];
@@ -53,11 +52,9 @@ $total_pages = $result['total_pages'];
 // Hapus transaksi jika diminta
 if (isset($_GET['delete'])) {
     $delete_id = $_GET['delete'];
-    if (deleteTransaction($delete_id, $user_id)) {
-        echo "<div class='alert alert-success'>Transaksi berhasil dihapus!</div>";
-    } else {
-        echo "<div class='alert alert-danger'>Gagal menghapus transaksi!</div>";
-    }
+    deleteTransaction($delete_id, $user_id);
+    header('Location: transactions.php');
+    exit();
 }
 
 // Hitung total untuk statistik
@@ -95,28 +92,13 @@ function buildPageUrl($page, $params) {
     return 'transactions.php?' . http_build_query($params);
 }
 
-// Set page title
 $page_title = 'Semua Transaksi';
 
-// Ngambil header dan sidebar
 include '../includes/header.php';
 include '../includes/sidebar.php';
 ?>
 
-<!-- Pesan -->
-<?php if (isset($_SESSION['success'])): ?>
-<div class="alert alert-success alert-dismissible fade show">
-    <i class="bi bi-check-circle"></i> <?php echo $_SESSION['success']; unset($_SESSION['success']); ?>
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-<?php endif; ?>
 
-<?php if (isset($_SESSION['error'])): ?>
-<div class="alert alert-danger alert-dismissible fade show">
-    <i class="bi bi-exclamation-triangle"></i> <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-<?php endif; ?>
 
 <!-- Header -->
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -314,6 +296,10 @@ include '../includes/sidebar.php';
 <?php endif; ?>
 
 <?php
+// Ambil kategori untuk modal
+$expense_categories = getAllCategories($user_id, 'expense');
+$income_categories = getAllCategories($user_id, 'income');
+
 // Ngambil modal dan footer
 include '../includes/modals/add-transaction-modal.php';
 

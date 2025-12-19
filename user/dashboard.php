@@ -9,38 +9,52 @@ requireLogin();
 $user_id = $_SESSION['user_id'];
 $username = $_SESSION['username'];
 
-// Ambil data statistik
+$db = getDB();
+$stmt = $db->prepare("SELECT monthly_budget FROM users WHERE id = ?");
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$user_data = $stmt->get_result()->fetch_assoc();
+$monthly_budget = $user_data['monthly_budget'] ?? 0;
+
 $stats = getMonthlyStats($user_id);
-$recent_transactions = getRecentTransactions($user_id, 3);
+$recent_transactions = getRecentTransactions($user_id, 7);
 $category_breakdown = getCategoryBreakdown($user_id);
 
-// Hitung balance
 $total_income = $stats['total_income'];
 $total_expense = $stats['total_expense'];
 $balance = $total_income - $total_expense;
 
-// Data untuk chart
-$chart_labels = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
-$chart_data = [];
+$budget_used_percentage = 0;
+$budget_remaining = 0;
+$budget_status = 'safe';
+$budget_alert = '';
 
-// Buat data chart sederhana berdasarkan balance saat ini
-for ($i = 0; $i < 7; $i++) {
-    $variation = rand(-50000, 100000);
-    $chart_data[] = max(0, $balance + $variation);
+if ($monthly_budget > 0) {
+    $budget_used_percentage = ($total_expense / $monthly_budget) * 100;
+    $budget_remaining = $monthly_budget - $total_expense;
+    
+    if ($budget_used_percentage >= 100) {
+        $budget_status = 'danger';
+        $budget_alert = 'Peringatan! Anda telah melebihi budget bulanan sebesar ' . formatRupiah(abs($budget_remaining)) . '.';
+    } elseif ($budget_used_percentage >= 80) {
+        $budget_status = 'warning';
+        $budget_alert = 'Hati-hati! Anda sudah menggunakan ' . number_format($budget_used_percentage, 1) . '% dari budget bulanan.';
+    } elseif ($budget_used_percentage >= 65) {
+        $budget_status = 'info';
+        $budget_alert = 'Sisa budget bulanan Anda: ' . formatRupiah($budget_remaining) . ' (' . number_format(100 - $budget_used_percentage, 1) . '%).';
+    }
 }
-$chart_data[6] = $balance; // Hari terakhir = balance sekarang
 
 $page_title = 'Dashboard';
-$additional_css = '<script src="../assets/js/chart.min.js"></script>';
 
-// Nangmbil header dan sidebar
 include '../includes/header.php';
 include '../includes/sidebar.php';
 ?>
 
+
 <!-- Statistik Utama -->
-<div class="row mb-4">
-    <div class="col-md-4 mb-3">
+<div class="row mb-3">
+    <div class="col-lg-4 col-md-6 mb-3">
         <div class="card stat-card balance-card">
             <div class="card-body">
                 <div class="d-flex justify-content-between">
@@ -53,7 +67,7 @@ include '../includes/sidebar.php';
             </div>
         </div>
     </div>
-    <div class="col-md-4 mb-3">
+    <div class="col-lg-4 col-md-6 mb-3">
         <div class="card stat-card income-card">
             <div class="card-body">
                 <div class="d-flex justify-content-between">
@@ -66,7 +80,7 @@ include '../includes/sidebar.php';
             </div>
         </div>
     </div>
-    <div class="col-md-4 mb-3">
+    <div class="col-lg-4 col-md-6 mb-3">
         <div class="card stat-card expense-card">
             <div class="card-body">
                 <div class="d-flex justify-content-between">
@@ -84,7 +98,6 @@ include '../includes/sidebar.php';
 <div class="row">
     <!-- Kolom Kiri -->
     <div class="col-lg-8">
-        <!-- Tombol Quick Add -->
         <div class="card mb-4">
             <div class="card-body">
                 <h5 class="card-title">Tambah Cepat</h5>
@@ -116,10 +129,9 @@ include '../includes/sidebar.php';
             </div>
         </div>
 
-        <!-- Transaksi Terbaru (Dipindah ke atas) -->
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between">
-                <h5 class="mb-0">3 Transaksi Terbaru</h5>
+                <h5 class="mb-0">7 Transaksi Terbaru</h5>
                 <a href="transactions.php" class="btn btn-sm btn-outline-primary">Lihat Semua</a>
             </div>
             <div class="card-body p-0">
@@ -161,17 +173,82 @@ include '../includes/sidebar.php';
                 <?php endif; ?>
             </div>
         </div>
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Grafik Saldo Minggu Ini</h5>
-                <canvas id="balanceChart" height="100"></canvas>
-            </div>
-        </div>
     </div>
 
     <!-- Kolom Kanan -->
     <div class="col-lg-4">
-        <!-- Breakdown Kategori -->
+        <?php if ($monthly_budget > 0): ?>
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Budget Bulanan</h5>
+                <a href="profile.php" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-gear"></i>
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="row text-center mb-3">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <h6 class="text-muted mb-1">Budget</h6>
+                            <p class="mb-0 fw-bold"><?php echo formatRupiah($monthly_budget); ?></p>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h6 class="text-muted mb-1">Terpakai</h6>
+                        <p class="mb-0 fw-bold text-<?php echo $budget_status === 'danger' ? 'danger' : ($budget_status === 'warning' ? 'warning' : 'success'); ?>">
+                            <?php echo formatRupiah($total_expense); ?>
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <small class="text-muted">Progress</small>
+                        <small class="text-muted"><?php echo number_format($budget_used_percentage, 1); ?>%</small>
+                    </div>
+                    <div class="progress" style="height: 10px;">
+                        <div class="progress-bar bg-<?php echo $budget_status === 'danger' ? 'danger' : ($budget_status === 'warning' ? 'warning' : 'success'); ?>" 
+                             style="width: <?php echo min(100, $budget_used_percentage); ?>%"></div>
+                    </div>
+                </div>
+                
+                <div class="mt-3"> 
+                    <?php if ($budget_status === 'danger'): ?>
+                        <div class="alert alert-danger py-2">
+                            <small><i class="bi bi-exclamation-triangle"></i> 
+                            <strong>Over Budget!</strong><br>
+                            Pertimbangkan untuk mengurangi pengeluaran atau meninjau budget Anda.</small>
+                        </div>
+                    <?php elseif ($budget_status === 'warning'): ?>
+                        <div class="alert alert-warning py-2">
+                            <small><i class="bi bi-exclamation-circle"></i> 
+                            <strong>Mendekati Limit!</strong><br>
+                            Sisa budget: <?php echo formatRupiah($budget_remaining); ?>. Hati-hati dengan pengeluaran.</small>
+                        </div>
+                    <?php else: ?>
+                        <div class="alert alert-success py-2">
+                            <small><i class="bi bi-check-circle"></i> 
+                            <strong>Budget Aman!</strong><br>
+                            Sisa budget: <?php echo formatRupiah($budget_remaining); ?>. Tetap bijak berbelanja!</small>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <?php 
+                    $days_remaining = date('t') - date('j');
+                    $daily_budget = $days_remaining > 0 ? $budget_remaining / $days_remaining : 0;
+                    ?>
+                    <?php if ($days_remaining > 0 && $budget_remaining > 0): ?>
+                    <div class="text-center mt-2 p-2 bg-light rounded">
+                        <small class="text-muted">Saran pengeluaran harian:</small><br>
+                        <strong class="text-primary"><?php echo formatRupiah($daily_budget); ?>/hari</strong>
+                        <small class="text-muted">(<?php echo $days_remaining; ?> hari tersisa)</small>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+        
         <div class="card">
             <div class="card-header">
                 <h5 class="mb-0">Kategori Pengeluaran</h5>
@@ -204,62 +281,13 @@ include '../includes/sidebar.php';
 </div>
 
 <?php
-// Ngambil modal dan footer
+// Ambil kategori untuk modal
+$expense_categories = getAllCategories($user_id, 'expense');
+$income_categories = getAllCategories($user_id, 'income');
+
 include '../includes/modals/add-transaction-modal.php';
 
-// custom scripts untuk halaman ini
-$custom_scripts = '
-    // Data chart dari PHP
-    const chartLabels = ' . json_encode($chart_labels) . ';
-    const chartData = ' . json_encode($chart_data) . ';
-
-    // Inisialisasi chart
-    const ctx = document.getElementById("balanceChart").getContext("2d");
-    new Chart(ctx, {
-        type: "line",
-        data: {
-            labels: chartLabels,
-            datasets: [{
-                label: "Saldo",
-                data: chartData,
-                borderColor: "#4361ee",
-                backgroundColor: "rgba(67, 97, 238, 0.1)",
-                borderWidth: 3,
-                tension: 0.4,
-                fill: true
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                y: {
-                    beginAtZero: false,
-                    ticks: {
-                        callback: function(value) {
-                            return "Rp " + value.toLocaleString("id-ID");
-                        }
-                    }
-                }
-            }
-        }
-    });
-
-    // Quick add function
-    function quickAdd(category, amount) {
-        document.getElementById("expense").checked = true;
-        document.getElementById("amount").value = amount;
-        document.getElementById("description").value = category;
-        filterCategories("expense");
-        setTimeout(() => {
-            document.getElementById("category").value = category;
-        }, 100);
-        
-        new bootstrap.Modal(document.getElementById("addModal")).show();
-    }
-';
+$custom_scripts = '';
 
 include '../includes/footer.php';
 ?>

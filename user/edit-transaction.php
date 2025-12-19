@@ -17,7 +17,6 @@ if (isset($_GET['id'])) {
 $transaction = getTransaction($transaction_id, $user_id);
 
 if (!$transaction) {
-    $_SESSION['error'] = 'Transaksi tidak ditemukan';
     header('Location: transactions.php');
     exit();
 }
@@ -34,25 +33,15 @@ if (isset($_POST['btnedit'])) {
     $date = $_POST['date'];
     $notes = $_POST['notes'];
     
-    // Validasi
-    if (empty($description) || $amount <= 0 || empty($category)) {
-        echo "<div class='alert alert-danger'>Semua field wajib harus diisi!</div>";
-    } else {
-        // Update transaksi
-        if (updateTransaction($transaction_id, $user_id, $type, $description, $amount, $category, $date, $notes)) {
-            echo "<div class='alert alert-success'>Transaksi berhasil diperbarui!</div>";
-            header('Location: transactions.php');
-            exit();
-        } else {
-            echo "<div class='alert alert-danger'>Gagal memperbarui transaksi!</div>";
-        }
+    if (!empty($description) && $amount > 0 && !empty($category)) {
+        updateTransaction($transaction_id, $user_id, $type, $description, $amount, $category, $date, $notes);
+        header('Location: transactions.php');
+        exit();
     }
 }
 
-// Set page title
 $page_title = 'Edit Transaksi';
 
-// Ngmabil header dan sidebar
 include '../includes/header.php';
 include '../includes/sidebar.php';
 ?>
@@ -154,7 +143,6 @@ include '../includes/sidebar.php';
 </div>
 
 <?php
-// custom scripts untuk halaman ini
 $custom_scripts = '
     // Load kategori saat halaman dimuat
     document.addEventListener("DOMContentLoaded", function() {

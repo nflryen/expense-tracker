@@ -2,6 +2,7 @@
 require_once '../config.php';
 require_once '../crud/user-crud.php';
 require_once '../crud/transaction-crud.php';
+require_once '../crud/category-crud.php';
 
 requireLogin();
 
@@ -65,16 +66,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['error'] = 'Password minimal 6 karakter';
         } else {
             // Verifikasi password lama
-            $stmt = $db->prepare("SELECT password_hash FROM users WHERE id = ?");
+            $stmt = $db->prepare("SELECT password FROM users WHERE id = ?");
             $stmt->bind_param("i", $user_id);
             $stmt->execute();
             $result = $stmt->get_result()->fetch_assoc();
             
-            if (!password_verify($current_password, $result['password_hash'])) {
+            if (md5($current_password) !== $result['password']) {
                 $_SESSION['error'] = 'Password lama tidak benar';
             } else {
-                $new_hash = password_hash($new_password, PASSWORD_DEFAULT);
-                $stmt = $db->prepare("UPDATE users SET password_hash = ? WHERE id = ?");
+                $new_hash = md5($new_password);
+                $stmt = $db->prepare("UPDATE users SET password = ? WHERE id = ?");
                 $stmt->bind_param("si", $new_hash, $user_id);
                 
                 if ($stmt->execute()) {
@@ -277,7 +278,9 @@ include '../includes/sidebar.php';
 </div>
 
 <?php
-// Ngambil modal dan footer
+$expense_categories = getAllCategories($user_id, 'expense');
+$income_categories = getAllCategories($user_id, 'income');
+
 include '../includes/modals/add-transaction-modal.php';
 include '../includes/footer.php';
 ?>

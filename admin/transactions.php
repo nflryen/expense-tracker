@@ -5,7 +5,6 @@ require_once '../crud/user-crud.php';
 
 requireAdmin();
 
-// Ambil parameter filter
 $page = (int)($_GET['page'] ?? 1);
 $search = $_GET['search'] ?? '';
 $type = $_GET['type'] ?? '';
@@ -15,14 +14,12 @@ $filters = [];
 if (!empty($search)) $filters['search'] = $search;
 if (!empty($type)) $filters['type'] = $type;
 
-// Ambil semua transaksi
 $db = getDB();
 
 $where = "WHERE 1=1";
 $params = [];
 $types = "";
 
-// Filter berdasarkan pencarian
 if (!empty($search)) {
     $where .= " AND (t.description LIKE ? OR t.notes LIKE ? OR u.username LIKE ?)";
     $search_param = '%' . $search . '%';
@@ -32,14 +29,12 @@ if (!empty($search)) {
     $types .= "sss";
 }
 
-// Filter berdasarkan tipe
 if (!empty($type)) {
     $where .= " AND t.type = ?";
     $params[] = $type;
     $types .= "s";
 }
 
-// Filter berdasarkan user
 if (!empty($user_filter)) {
     $where .= " AND u.username LIKE ?";
     $user_param = '%' . $user_filter . '%';
@@ -125,10 +120,8 @@ if (!empty($params)) {
     $stats = $db->query($stats_query)->fetch_assoc();
 }
 
-// Set page title
 $page_title = 'Semua Transaksi - Admin';
 
-// Include header dan admin sidebar
 include '../includes/header.php';
 include '../includes/admin-sidebar.php';
 ?>
@@ -291,7 +284,6 @@ include '../includes/admin-sidebar.php';
 <?php if ($total_pages > 1): ?>
 <nav class="mt-4">
     <ul class="pagination justify-content-center">
-        <!-- Previous -->
         <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
             <a class="page-link" href="?page=<?php echo $page - 1; ?>&search=<?php echo urlencode($search); ?>&type=<?php echo urlencode($type); ?>&user=<?php echo urlencode($user_filter); ?>">
                 <i class="bi bi-chevron-left"></i>

@@ -1,11 +1,12 @@
-<div class="modal fade" id="addModal" tabindex="-1">
+<div class="modal fade" id="addModal" tabindex="-1" data-bs-backdrop="true" data-bs-keyboard="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Tambah Transaksi</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" id="closeBtn"></button>
             </div>
             <form id="addForm" action="add-transaction.php" method="POST">
+                <input type="hidden" name="redirect_to" id="redirect_to" value="">
                 <div class="modal-body">
                     <!-- Tipe Transaksi -->
                     <div class="mb-3">
@@ -44,28 +45,24 @@
                         <label class="form-label">Kategori</label>
                         <select class="form-select" name="category" id="category" required>
                             <option value="">Pilih kategori</option>
+                            
                             <!-- Kategori Pengeluaran -->
-                            <option value="Makan" data-type="expense">🍔 Makan</option>
-                            <option value="Jajan" data-type="expense">🍭 Jajan</option>
-                            <option value="Transport" data-type="expense">🚗 Transport</option>
-                            <option value="Token" data-type="expense">⚡ Token</option>
-                            <option value="Laundry" data-type="expense">👕 Laundry</option>
-                            <option value="Internet" data-type="expense">🌐 Internet</option>
-                            <option value="Parkir" data-type="expense">🅿️ Parkir</option>
-                            <option value="Pulsa" data-type="expense">📱 Pulsa</option>
-                            <option value="Entertainment" data-type="expense">🎬 Entertainment</option>
-                            <option value="Kesehatan" data-type="expense">💊 Kesehatan</option>
-                            <option value="Pendidikan" data-type="expense">📚 Pendidikan</option>
-                            <option value="Lainnya" data-type="expense">💰 Lainnya</option>
+                            <?php if (isset($expense_categories)): ?>
+                                <?php foreach ($expense_categories as $category): ?>
+                                <option value="<?php echo htmlspecialchars($category['name']); ?>" data-type="expense">
+                                    <?php echo $category['icon']; ?> <?php echo htmlspecialchars($category['name']); ?>
+                                </option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                             
                             <!-- Kategori Pemasukan -->
-                            <option value="Gaji" data-type="income">💰 Gaji</option>
-                            <option value="Uang Saku" data-type="income">💵 Uang Saku</option>
-                            <option value="Bonus" data-type="income">🎁 Bonus</option>
-                            <option value="Investasi" data-type="income">📈 Investasi</option>
-                            <option value="Freelance" data-type="income">💻 Freelance</option>
-                            <option value="Hadiah" data-type="income">🎉 Hadiah</option>
-                            <option value="Lainnya" data-type="income">💰 Lainnya</option>
+                            <?php if (isset($income_categories)): ?>
+                                <?php foreach ($income_categories as $category): ?>
+                                <option value="<?php echo htmlspecialchars($category['name']); ?>" data-type="income">
+                                    <?php echo $category['icon']; ?> <?php echo htmlspecialchars($category['name']); ?>
+                                </option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </select>
                     </div>
 
@@ -84,8 +81,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="cancelBtn">Batal</button>
+                    <button type="submit" name="btnadd" class="btn btn-primary" id="submitBtn">
                         <i class="bi bi-check"></i> Simpan
                     </button>
                 </div>

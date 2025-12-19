@@ -19,11 +19,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (empty($username) || empty($email)) {
             $_SESSION['error'] = 'Username dan email tidak boleh kosong';
         } else {
-            if (updateUserProfile($user_id, $username, $email, 0)) { // Admin tidak butuh monthly budget
-                $_SESSION['username'] = $username; // Update session
+            if (updateUserProfile($user_id, $username, $email, 0)) {
+                $_SESSION['username'] = $username;
                 $_SESSION['success'] = 'Profil admin berhasil diperbarui';
                 
-                // Refresh data admin
                 $admin['username'] = $username;
                 $admin['email'] = $email;
             } else {
@@ -60,12 +59,10 @@ $global_stats = getGlobalStats();
 
 $page_title = 'Profil Admin';
 
-// Ngambil header dan admin sidebar
 include '../includes/header.php';
 include '../includes/admin-sidebar.php';
 ?>
 
-<!-- Pesan -->
 <?php if (isset($_SESSION['success'])): ?>
 <div class="alert alert-success alert-dismissible fade show">
     <i class="bi bi-check-circle"></i> <?php echo $_SESSION['success']; unset($_SESSION['success']); ?>
@@ -80,7 +77,6 @@ include '../includes/admin-sidebar.php';
 </div>
 <?php endif; ?>
 
-<!-- Header -->
 <div class="mb-4">
     <h1 class="h3">
         <i class="bi bi-shield-check text-warning me-2"></i>
@@ -90,8 +86,7 @@ include '../includes/admin-sidebar.php';
 </div>
 
 <div class="row">
-    <!-- Informasi Profil Admin -->
-    <div class="col-lg-8">
+    <div class="col-lg-12">
         <div class="card mb-4">
             <div class="card-header">
                 <h5 class="mb-0">
@@ -154,83 +149,6 @@ include '../includes/admin-sidebar.php';
                         <i class="bi bi-shield-lock"></i> Ubah Password
                     </button>
                 </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Statistik Admin -->
-    <div class="col-lg-4">
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="bi bi-graph-up"></i> Statistik Sistem
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between">
-                        <span>Admin sejak:</span>
-                        <span class="fw-bold"><?php echo formatTanggal($admin['created_at']); ?></span>
-                    </div>
-                </div>
-                
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between">
-                        <span>Total Users:</span>
-                        <span class="fw-bold text-primary"><?php echo number_format($global_stats['total_users']); ?></span>
-                    </div>
-                </div>
-                
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between">
-                        <span>Total Transaksi:</span>
-                        <span class="fw-bold text-success"><?php echo number_format($global_stats['total_transactions']); ?></span>
-                    </div>
-                </div>
-                
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between">
-                        <span>User Aktif:</span>
-                        <span class="fw-bold text-info"><?php echo number_format($global_stats['active_users']); ?></span>
-                    </div>
-                </div>
-                
-                <hr>
-                
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between">
-                        <span>Volume Global:</span>
-                        <span class="fw-bold text-warning">
-                            <?php echo formatRupiah($global_stats['total_income'] + $global_stats['total_expense']); ?>
-                        </span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Aksi dmin -->
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="bi bi-tools"></i> Admin Actions
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <a href="dashboard.php" class="btn btn-outline-primary">
-                        <i class="bi bi-speedometer2"></i> Dashboard Admin
-                    </a>
-                    <a href="users.php" class="btn btn-outline-info">
-                        <i class="bi bi-people"></i> Kelola Users
-                    </a>
-                    <a href="transactions.php" class="btn btn-outline-success">
-                        <i class="bi bi-list-ul"></i> Monitor Transaksi
-                    </a>
-                    <hr>
-                    <a href="../auth/logout.php" class="btn btn-outline-danger">
-                        <i class="bi bi-box-arrow-right"></i> Logout Admin
-                    </a>
-                </div>
             </div>
         </div>
     </div>

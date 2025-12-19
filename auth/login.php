@@ -2,7 +2,6 @@
 error_reporting(0);
 session_start();
 
-// Jika sudah login, redirect ke dashboard
 if (isset($_SESSION['user']) && isset($_SESSION['level'])) {
     if ($_SESSION['level'] == 'admin') {
         header('Location: ../admin/dashboard.php');
@@ -36,15 +35,13 @@ if (isset($_POST['btnlogin'])) {
         $_SESSION['name'] = $data['name'];
         
         if ($_SESSION['level'] == "admin") {
-            echo "<div class='alert alert-success'>Welcome Admin!</div>";
             header("Location: ../admin/dashboard.php");
         } elseif ($_SESSION['level'] == "user") {
-            echo "<div class='alert alert-success'>Welcome User!</div>";
             header("Location: ../user/dashboard.php");
         }
         exit();
     } else {
-        echo "<div class='alert alert-danger'>Username or Password is incorrect!</div>";
+        $error_message = "Username atau password salah!";
     }
 }
 ?>
@@ -53,7 +50,7 @@ if (isset($_POST['btnlogin'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Dompet kita
+    <title>Login - Dompet Sesat
     </title>
     <link href="../assets/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/bootstrap-icons.css">
@@ -66,7 +63,7 @@ if (isset($_POST['btnlogin'])) {
                 <div class="card login-card">
                     <div class="card-header text-center">
                         <h3 class="mb-0">
-                            <i class="bi bi-wallet2"></i> Dompet Kita
+                            <i class="bi bi-wallet2"></i> Dompet Sesat
                         </h3>
                         <small class="text-white">Pencatat Keuangan Anak Kost</small>
                     </div>
@@ -74,7 +71,12 @@ if (isset($_POST['btnlogin'])) {
                     <div class="card-body">
                         <h5 class="text-center mb-4">Masuk ke Akun</h5>
                         
-
+                        <?php if (isset($error_message)): ?>
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="bi bi-exclamation-triangle"></i> <?php echo $error_message; ?>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        <?php endif; ?>
                         
                         <form action="#" method="post">
                             <div class="input-group mb-3">
@@ -105,14 +107,14 @@ if (isset($_POST['btnlogin'])) {
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault" />
                                         <label class="form-check-label" for="flexCheckDefault">
-                                            Remember Me
+                                            Ingat Saya
                                         </label>
                                     </div>
                                 </div>
                                 <!-- /.col -->
                                 <div class="col-4">
                                     <div class="d-grid gap-2">
-                                        <input type="submit" class="btn btn-primary" value="Sign In" name="btnlogin" />
+                                        <input type="submit" class="btn btn-primary" value="Masuk" name="btnlogin" />
                                     </div>
                                 </div>
                             </div>

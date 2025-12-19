@@ -5,11 +5,13 @@ require_once '../crud/user-crud.php';
 
 requireAdmin();
 
-if (isset($_POST['btnupdate'])) {
-    $user_id = $_POST['user_id'];
-    $role = $_POST['role'];
+if ((isset($_POST['action']) && $_POST['action'] === 'update_role') || isset($_POST['btnupdate'])) {
+    $user_id = isset($_POST['user_id']) ? $_POST['user_id'] : '';
+    $role = isset($_POST['role']) ? $_POST['role'] : '';
     
-    if (updateUserRole($user_id, $role)) {
+    if (empty($user_id) || empty($role)) {
+        echo "<div class='alert alert-danger'>Data tidak lengkap!</div>";
+    } elseif (updateUserRole($user_id, $role)) {
         echo "<div class='alert alert-success'>Role user berhasil diperbarui!</div>";
     } else {
         echo "<div class='alert alert-danger'>Gagal memperbarui role user!</div>";
@@ -38,14 +40,12 @@ if (isset($_GET['search'])) {
     $search = '';
 }
 
-// Ambil data users
 $result = getAllUsers($page, 15, $search);
 $users = $result['data'];
 $total_pages = $result['total_pages'];
 
 $page_title = 'Kelola Users - Admin';
 
-// Ngambil header dan admin sidebar
 include '../includes/header.php';
 include '../includes/admin-sidebar.php';
 ?>
@@ -179,12 +179,6 @@ include '../includes/admin-sidebar.php';
                         </td>
                         <td class="text-center">
                             <div class="btn-group btn-group-sm">
-                                <button class="btn btn-outline-info" 
-                                        onclick="viewUser(<?php echo $user['id']; ?>)" 
-                                        title="Lihat Detail">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                                
                                 <?php if ($user['id'] != $_SESSION['user_id']): ?>
                                 <!-- Tidak bisa edit/hapus diri sendiri -->
                                 <button class="btn btn-outline-warning" 
@@ -275,7 +269,7 @@ include '../includes/admin-sidebar.php';
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-warning">
+                    <button type="submit" name="btnupdate" class="btn btn-warning">
                         <i class="bi bi-check"></i> Ubah Role
                     </button>
                 </div>
@@ -284,28 +278,46 @@ include '../includes/admin-sidebar.php';
     </div>
 </div>
 
-<!-- Modal Detail User -->
-<div class="modal fade" id="userDetailModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+<!-- Modal Konfirmasi Hapus User -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1">
+    <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Detail User</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle"></i> Peringatan Keras!
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" id="userDetailContent">
-                <!-- Content will be loaded via AJAX -->
-                <div class="text-center">
-                    <div class="spinner-border" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <h6><strong>Yakin ingin menghapus user: <span id="deleteUsername"></span>?</strong></h6>
                 </div>
+                
+                <p><strong>Yang akan terhapus:</strong></p>
+                <ul class="text-danger">
+                    <li>Akun user</li>
+                    <li>Semua transaksi user</li>
+                    <li>Semua kategori custom user</li>
+                </ul>
+                
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Tindakan ini TIDAK DAPAT DIBATALKAN!</strong>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x"></i> Batal
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="bi bi-trash"></i> Ya, Hapus User
+                </button>
             </div>
         </div>
     </div>
 </div>
 
 <?php
-// Set custom scripts untuk halaman ini
 $custom_scripts = '
     // Ubah role user
     function changeRole(userId, username, currentRole) {
@@ -320,53 +332,53 @@ $custom_scripts = '
         
         new bootstrap.Modal(document.getElementById("roleModal")).show();
     }
+    
+    // Validasi form sebelum submit
+    document.addEventListener("DOMContentLoaded", function() {
+        const roleForm = document.querySelector("#roleModal form");
+        if (roleForm) {
+            roleForm.addEventListener("submit", function(e) {
+                const userId = document.getElementById("role_user_id").value;
+                const selectedRole = document.querySelector("input[name=role]:checked");
+                
+                if (!userId || !selectedRole) {
+                    e.preventDefault();
+                    alert("Harap pilih role yang valid!");
+                    return false;
+                }
+                
+                // Konfirmasi perubahan role
+                const confirmation = confirm("Yakin ingin mengubah role user " + document.getElementById("role_username").textContent + " menjadi " + selectedRole.value + "?");
+                if (!confirmation) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+        }
+    });
 
     // Hapus user
     function deleteUser(userId, username) {
-        const message = "PERINGATAN KERAS!\\n\\n" +
-                       "Yakin ingin menghapus user: " + username + "?\\n\\n" +
-                       "Yang akan terhapus:\\n" +
-                       "- Akun user\\n" +
-                       "- Semua transaksi user\\n" +
-                       "- Semua kategori custom user\\n\\n" +
-                       "Tindakan ini TIDAK DAPAT DIBATALKAN!\\n\\n" +
-                       "Ketik HAPUS untuk konfirmasi:";
+        // Set data ke modal
+        document.getElementById("deleteUsername").textContent = username;
         
-        const confirmation = prompt(message);
-        if (confirmation === "HAPUS") {
+        // Hapus event listener lama dan set yang baru
+        const confirmBtn = document.getElementById("confirmDeleteBtn");
+        
+        // Clone node untuk menghapus semua event listener
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+        
+        // Set event listener baru
+        newConfirmBtn.onclick = function() {
             window.location.href = "users.php?delete=" + userId;
-        } else if (confirmation !== null) {
-            alert("Konfirmasi tidak sesuai. User tidak dihapus.");
-        }
+        };
+        
+        // Tampilkan modal
+        new bootstrap.Modal(document.getElementById("deleteUserModal")).show();
     }
 
-    // Lihat detail user
-    function viewUser(userId) {
-        const modal = new bootstrap.Modal(document.getElementById("userDetailModal"));
-        const content = document.getElementById("userDetailContent");
-        
-        // Show loading
-        content.innerHTML = `
-            <div class="text-center">
-                <div class="spinner-border" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-            </div>
-        `;
-        
-        modal.show();
-        
-        // Load user detail (simplified - in real app would use AJAX)
-        setTimeout(() => {
-            content.innerHTML = `
-                <div class="alert alert-info">
-                    <i class="bi bi-info-circle"></i>
-                    Fitur detail user akan dikembangkan lebih lanjut.
-                    Untuk saat ini, Anda dapat melihat statistik dasar di tabel.
-                </div>
-            `;
-        }, 1000);
-    }
+
 ';
 
 include '../includes/footer.php';

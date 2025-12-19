@@ -5,13 +5,14 @@ require_once '../crud/user-crud.php';
 
 requireAdmin();
 
-// ngambil statistik global
+$admin_id = $_SESSION['user_id'];
+$admin = getUserById($admin_id);
+
 $stats = getGlobalStats();
 $recent_transactions = getRecentTransactionsGlobal(8);
 
 $page_title = 'Admin Dashboard';
 
-// ngambil header dan admin sidebar
 include '../includes/header.php';
 include '../includes/admin-sidebar.php';
 ?>
@@ -24,14 +25,6 @@ include '../includes/admin-sidebar.php';
             Admin Dashboard
         </h1>
         <p class="text-muted mb-0">Overview sistem Dompet Kita</p>
-    </div>
-    <div class="d-flex gap-2">
-        <a href="users.php" class="btn btn-outline-primary">
-            <i class="bi bi-people"></i> Kelola Users
-        </a>
-        <a href="transactions.php" class="btn btn-outline-info">
-            <i class="bi bi-list-ul"></i> Transaksi
-        </a>
     </div>
 </div>
 
@@ -55,9 +48,8 @@ include '../includes/admin-sidebar.php';
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h6 class="text-white-50">User Aktif</h6>
+                        <h6 class="text-white-50">User Aktif (bulan ini)</h6>
                         <h3><?php echo number_format($stats['active_users']); ?></h3>
-                        <small class="text-white-50">Bulan ini</small>
                     </div>
                     <i class="bi bi-person-check fs-1 opacity-50"></i>
                 </div>
@@ -153,9 +145,59 @@ include '../includes/admin-sidebar.php';
             </div>
         </div>
     </div>
-
-    <!-- Kategori yg sering -->
+    
     <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-graph-up"></i> Statistik Sistem
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Admin sejak:</span>
+                        <span class="fw-bold"><?php echo formatTanggal($admin['created_at']); ?></span>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Total Users:</span>
+                        <span class="fw-bold text-primary"><?php echo number_format($stats['total_users']); ?></span>
+                    </div>
+                    <div class="ms-3">
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Total Transaksi:</span>
+                        <span class="fw-bold text-success"><?php echo number_format($stats['total_transactions']); ?></span>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>User Aktif:</span>
+                        <span class="fw-bold text-info"><?php echo number_format($stats['active_users']); ?></span>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Volume Global:</span>
+                        <span class="fw-bold text-warning">
+                            <?php echo formatRupiah($stats['total_income'] + $stats['total_expense']); ?>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Kategori Paling Populer -->
         <div class="card">
             <div class="card-header">
                 <h5 class="mb-0">Kategori Paling Populer</h5>
@@ -179,8 +221,6 @@ include '../includes/admin-sidebar.php';
                 <?php endif; ?>
             </div>
         </div>
-
-
     </div>
 </div>
 

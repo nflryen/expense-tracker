@@ -16,7 +16,6 @@ function requireAdmin() {
     }
 }
 
-// Ambil semua users untuk admin
 function getAllUsers($page = 1, $per_page = 20, $search = '') {
     $db = getDB();
     
@@ -81,29 +80,34 @@ function getAllUsers($page = 1, $per_page = 20, $search = '') {
     ];
 }
 
-// Ambil statistik global untuk admin
 function getGlobalStats() {
     $db = getDB();
     
     $stats = [];
     
-    // Total users
-    $result = $db->query("SELECT COUNT(*) as count FROM users WHERE role = 'user'");
+    // Total semua users (admin + user)
+    $result = $db->query("SELECT COUNT(*) as count FROM users");
     $stats['total_users'] = $result->fetch_assoc()['count'];
+    
+    // Breakdown users by role
+    $result = $db->query("SELECT COUNT(*) as count FROM users WHERE role = 'admin'");
+    $stats['total_admins'] = $result->fetch_assoc()['count'];
+    
+    $result = $db->query("SELECT COUNT(*) as count FROM users WHERE role = 'user'");
+    $stats['total_regular_users'] = $result->fetch_assoc()['count'];
     
     // Total transaksi
     $result = $db->query("SELECT COUNT(*) as count FROM transactions");
     $stats['total_transactions'] = $result->fetch_assoc()['count'];
     
-    // Total pemasukan global
+    // Total income dan expense
     $result = $db->query("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE type = 'income'");
     $stats['total_income'] = $result->fetch_assoc()['total'];
     
-    // Total pengeluaran global
     $result = $db->query("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE type = 'expense'");
     $stats['total_expense'] = $result->fetch_assoc()['total'];
     
-    // User aktif bulan ini (yang ada transaksi)
+    // User aktif bulan ini (yang punya transaksi)
     $result = $db->query("
         SELECT COUNT(DISTINCT user_id) as count 
         FROM transactions 
@@ -112,7 +116,7 @@ function getGlobalStats() {
     ");
     $stats['active_users'] = $result->fetch_assoc()['count'];
     
-    // Kategori paling populer
+    // Kategori populer
     $result = $db->query("
         SELECT c.name, COUNT(*) as usage_count
         FROM transactions t
@@ -126,37 +130,32 @@ function getGlobalStats() {
     return $stats;
 }
 
-// Hapus user (admin only)
 function deleteUser($user_id) {
     $db = getDB();
     
-    // Pastikan user ada
     $stmt = $db->prepare("SELECT role FROM users WHERE id = ?");
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $user = $stmt->get_result()->fetch_assoc();
     
     if (!$user) {
-        return false; // User tidak ditemukan
+        return false;
     }
     
-    // Tidak bisa hapus diri sendiri
     if ($user_id == $_SESSION['user_id']) {
-        return false; // Tidak bisa hapus diri sendiri
+        return false;
     }
     
-    // Cek apakah ini admin terakhir
     if ($user['role'] === 'admin') {
         $stmt = $db->prepare("SELECT COUNT(*) as admin_count FROM users WHERE role = 'admin'");
         $stmt->execute();
         $admin_count = $stmt->get_result()->fetch_assoc()['admin_count'];
         
         if ($admin_count <= 1) {
-            return false; // Tidak bisa hapus admin terakhir
+            return false;
         }
     }
     
-    // Hapus user (transaksi dan kategori akan terhapus otomatis karena CASCADE)
     $stmt = $db->prepare("DELETE FROM users WHERE id = ?");
     $stmt->bind_param("i", $user_id);
     
@@ -167,17 +166,29 @@ function deleteUser($user_id) {
 function updateUserRole($user_id, $role) {
     $db = getDB();
     
+    if (empty($user_id) || empty($role)) {
+        return false;
+    }
+    
     if (!in_array($role, ['user', 'admin'])) {
         return false;
     }
     
+    $check_stmt = $db->prepare("SELECT id FROM users WHERE id = ?");
+    $check_stmt->bind_param("i", $user_id);
+    $check_stmt->execute();
+    
+    if ($check_stmt->get_result()->num_rows === 0) {
+        return false;
+    }
+    
+    // Update role
     $stmt = $db->prepare("UPDATE users SET role = ? WHERE id = ?");
     $stmt->bind_param("si", $role, $user_id);
     
     return $stmt->execute();
 }
 
-// Ambil transaksi terbaru global (admin)
 function getRecentTransactionsGlobal($limit = 10) {
     $db = getDB();
     
@@ -212,7 +223,6 @@ function getAllTransactionsGlobal($filters = [], $page = 1, $per_page = 20) {
     $params = [];
     $types = "";
     
-    // Filter berdasarkan pencarian
     if (!empty($filters['search'])) {
         $where .= " AND (t.description LIKE ? OR t.notes LIKE ? OR u.username LIKE ?)";
         $search_param = '%' . $filters['search'] . '%';
@@ -222,14 +232,12 @@ function getAllTransactionsGlobal($filters = [], $page = 1, $per_page = 20) {
         $types .= "sss";
     }
     
-    // Filter berdasarkan tipe
     if (!empty($filters['type'])) {
         $where .= " AND t.type = ?";
         $params[] = $filters['type'];
         $types .= "s";
     }
     
-    // Filter berdasarkan user
     if (!empty($filters['user'])) {
         $where .= " AND u.username LIKE ?";
         $user_param = '%' . $filters['user'] . '%';
@@ -293,7 +301,6 @@ function getAllTransactionsGlobal($filters = [], $page = 1, $per_page = 20) {
     ];
 }
 
-// Ambil user detail untuk admin
 function getUserDetail($user_id) {
     $db = getDB();
     

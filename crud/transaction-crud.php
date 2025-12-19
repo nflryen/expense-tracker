@@ -1,8 +1,4 @@
 <?php
-// Config will be included by the calling file
-
-// ========== TRANSACTION CRUD OPERATIONS ==========
-
 // Tambah transaksi baru
 function addTransaction($user_id, $type, $description, $amount, $category, $date, $notes = '') {
     $db = getDB();
@@ -15,7 +11,15 @@ function addTransaction($user_id, $type, $description, $amount, $category, $date
     }
     
     $sql = "INSERT INTO transactions (user_id, category_id, type, description, amount, date, notes) VALUES ('$user_id', '$category_id', '$type', '$description', '$amount', '$date', '$notes')";
+    
     $result = $db->query($sql);
+    
+    if (!$result) {
+        // Log error untuk debugging
+        error_log("SQL Error: " . $db->error);
+        error_log("SQL Query: " . $sql);
+        return false;
+    }
     
     return $result;
 }
@@ -23,8 +27,7 @@ function addTransaction($user_id, $type, $description, $amount, $category, $date
 // Update transaksi
 function updateTransaction($id, $user_id, $type, $description, $amount, $category_id, $date, $notes = '') {
     $db = getDB();
-    
-    // Jika category_id adalah string (nama kategori), convert ke ID
+   
     if (!is_numeric($category_id)) {
         $category_id = getOrCreateCategory($user_id, $category_id, $type);
         if (!$category_id) {
@@ -134,7 +137,7 @@ function getTransactions($user_id, $filters = [], $page = 1, $per_page = 20) {
 }
 
 // Ambil transaksi terbaru
-function getRecentTransactions($user_id, $limit = 3) {
+function getRecentTransactions($user_id, $limit = 5) {
     $db = getDB();
     
     $stmt = $db->prepare("
@@ -235,12 +238,12 @@ function getCategoryBreakdown($user_id, $month = null, $year = null) {
 function getOrCreateCategory($user_id, $category_name, $type) {
     $db = getDB();
     
-    $stmt = $db->prepare("SELECT id FROM categories WHERE name = ? AND type = ? AND (user_id = ? OR is_default = TRUE) LIMIT 1");
-    $stmt->bind_param("ssi", $category_name, $type, $user_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    // Cek apakah kategori sudah ada
+    $sql = "SELECT id FROM categories WHERE name = '$category_name' AND type = '$type' AND (user_id = '$user_id' OR is_default = TRUE) LIMIT 1";
+    $result = $db->query($sql);
     
-    if ($row = $result->fetch_assoc()) {
+    if ($result && $result->num_rows > 0) {
+        $row = $result->fetch_assoc();
         return $row['id'];
     }
     
@@ -248,10 +251,9 @@ function getOrCreateCategory($user_id, $category_name, $type) {
     $icon = getCategoryIcon($category_name);
     $color = getCategoryColor($category_name);
     
-    $stmt = $db->prepare("INSERT INTO categories (user_id, name, icon, color, type) VALUES (?, ?, ?, ?, ?)");
-    $stmt->bind_param("issss", $user_id, $category_name, $icon, $color, $type);
+    $insert_sql = "INSERT INTO categories (user_id, name, icon, color, type) VALUES ('$user_id', '$category_name', '$icon', '$color', '$type')";
     
-    if ($stmt->execute()) {
+    if ($db->query($insert_sql)) {
         return $db->insert_id;
     }
     

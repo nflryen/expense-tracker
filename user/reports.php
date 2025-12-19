@@ -40,10 +40,8 @@ for ($i = 0; $i < 5; $i++) {
     $years[] = date('Y') - $i;
 }
 
-// Set page title
 $page_title = 'Laporan Keuangan';
 
-// Ngambil header dan sidebar
 include '../includes/header.php';
 include '../includes/sidebar.php';
 ?>

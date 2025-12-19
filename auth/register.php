@@ -2,7 +2,6 @@
 require_once '../config.php';
 require_once '../crud/user-crud.php';
 
-// Jika sudah login, redirect ke dashboard
 if (isLoggedIn()) {
     header('Location: ../index.php');
     exit();
@@ -11,7 +10,6 @@ if (isLoggedIn()) {
 $error = '';
 $success = '';
 
-// Proses registrasi
 if (isset($_POST['btnregister'])) {
     require_once "../config.php";
     
@@ -21,30 +19,27 @@ if (isset($_POST['btnregister'])) {
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
     
-    // Validasi input
     if (empty($username) || empty($name) || empty($email) || empty($password)) {
-        echo "<div class='alert alert-danger'>Semua field harus diisi!</div>";
+        $error = "Semua field harus diisi!";
     } elseif (strlen($username) < 3) {
-        echo "<div class='alert alert-danger'>Username minimal 3 karakter!</div>";
+        $error = "Username minimal 3 karakter!";
     } elseif (strlen($password) < 6) {
-        echo "<div class='alert alert-danger'>Password minimal 6 karakter!</div>";
+        $error = "Password minimal 6 karakter!";
     } elseif ($password != $confirm_password) {
-        echo "<div class='alert alert-danger'>Konfirmasi password tidak cocok!</div>";
+        $error = "Konfirmasi password tidak cocok!";
     } else {
-        // Cek apakah username atau email sudah ada
         $check_sql = "SELECT id FROM users WHERE username = '$username' OR email = '$email'";
         $result = $conn->query($check_sql);
         
         if ($result->num_rows > 0) {
-            echo "<div class='alert alert-danger'>Username atau email sudah digunakan!</div>";
+            $error = "Username atau email sudah digunakan!";
         } else {
-            // Insert user baru
             $insert_sql = "INSERT INTO users (username, name, email, password, role) VALUES ('$username', '$name', '$email', MD5('$password'), 'user')";
             
             if ($conn->query($insert_sql)) {
-                echo "<div class='alert alert-success'>Registrasi berhasil! <a href='login.php'>Silakan login</a></div>";
+                $success = "Registrasi berhasil! <a href='login.php' class='alert-link'>Silakan login</a>";
             } else {
-                echo "<div class='alert alert-danger'>Terjadi kesalahan saat registrasi!</div>";
+                $error = "Terjadi kesalahan saat registrasi!";
             }
         }
     }
@@ -55,7 +50,7 @@ if (isset($_POST['btnregister'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daftar - Dompet Sesat</title>
+    <title>Daftar - Dompet Kita</title>
     <link href="../assets/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/bootstrap-icons.css">
     <link rel="stylesheet" href="../assets/css/style.css">
@@ -67,7 +62,7 @@ if (isset($_POST['btnregister'])) {
                 <div class="card login-card">
                     <div class="card-header text-center">
                         <h3 class="mb-0">
-                            <i class="bi bi-wallet2"></i> Dompet Sesat
+                            <i class="bi bi-wallet2"></i> Dompet Kita
                         </h3>
                         <small class="text-muted">Pencatat Keuangan Anak Kost</small>
                     </div>

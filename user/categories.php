@@ -67,13 +67,11 @@ if (isset($_GET['delete'])) {
 $categories = getAllCategories($user_id);
 $usage_stats = getCategoryUsage($user_id);
 
-// Pisahkan berdasarkan tipe
 $income_categories = array_filter($categories, fn($cat) => $cat['type'] === 'income');
 $expense_categories = array_filter($categories, fn($cat) => $cat['type'] === 'expense');
 
 $page_title = 'Kelola Kategori';
 
-// Ngambil header dan sidebar
 include '../includes/header.php';
 include '../includes/sidebar.php';
 ?>
@@ -104,7 +102,6 @@ include '../includes/sidebar.php';
     </button>
 </div>
 
-<!-- Categories Layout -->
 <div class="row">
     <!-- Kategori Pemasukan -->
     <div class="col-md-6">
@@ -358,7 +355,6 @@ include '../includes/sidebar.php';
 </div>
 
 <?php
-// custom scripts untuk halaman ini
 $custom_scripts = '
     // Edit kategori
     function editCategory(category) {

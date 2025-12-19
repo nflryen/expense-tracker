@@ -53,7 +53,11 @@ function requireLogin() {
 
 // Fungsi format rupiah
 function formatRupiah($angka) {
-    return 'Rp ' . number_format($angka, 0, ',', '.');
+    // Handle null atau empty values
+    if ($angka === null || $angka === '') {
+        $angka = 0;
+    }
+    return 'Rp ' . number_format((float)$angka, 0, ',', '.');
 }
 
 // Fungsi format tanggal Indonesia

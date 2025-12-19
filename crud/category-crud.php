@@ -1,5 +1,4 @@
 <?php
-// Ambil semua kategori user
 function getAllCategories($user_id, $type = null) {
     $db = getDB();
     
@@ -20,7 +19,6 @@ function getAllCategories($user_id, $type = null) {
     return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 }
 
-// Ambil kategori berdasarkan ID
 function getCategoryById($id, $user_id) {
     $db = getDB();
     
@@ -35,13 +33,12 @@ function getCategoryById($id, $user_id) {
 function addCategory($user_id, $name, $icon, $color, $type) {
     $db = getDB();
     
-    // Cek apakah nama kategori sudah ada untuk user ini
     $stmt = $db->prepare("SELECT id FROM categories WHERE name = ? AND (user_id = ? OR is_default = TRUE) AND type = ?");
     $stmt->bind_param("sis", $name, $user_id, $type);
     $stmt->execute();
     
     if ($stmt->get_result()->num_rows > 0) {
-        return false; // Kategori sudah ada
+        return false;
     }
     
     $stmt = $db->prepare("INSERT INTO categories (user_id, name, icon, color, type) VALUES (?, ?, ?, ?, ?)");
@@ -53,8 +50,7 @@ function addCategory($user_id, $name, $icon, $color, $type) {
 // Update kategori
 function updateCategory($id, $user_id, $name, $icon, $color, $type) {
     $db = getDB();
-    
-    // Pastikan kategori milik user dan bukan default
+
     $stmt = $db->prepare("SELECT is_default FROM categories WHERE id = ? AND user_id = ?");
     $stmt->bind_param("ii", $id, $user_id);
     $stmt->execute();
@@ -69,7 +65,7 @@ function updateCategory($id, $user_id, $name, $icon, $color, $type) {
     $stmt->execute();
     
     if ($stmt->get_result()->num_rows > 0) {
-        return false; // Nama kategori sudah ada
+        return false;
     }
     
     $stmt = $db->prepare("UPDATE categories SET name = ?, icon = ?, color = ?, type = ? WHERE id = ? AND user_id = ?");
@@ -82,14 +78,13 @@ function updateCategory($id, $user_id, $name, $icon, $color, $type) {
 function deleteCategory($id, $user_id) {
     $db = getDB();
     
-    // Pastikan kategori milik user dan bukan default
     $stmt = $db->prepare("SELECT is_default FROM categories WHERE id = ? AND user_id = ?");
     $stmt->bind_param("ii", $id, $user_id);
     $stmt->execute();
     $result = $stmt->get_result()->fetch_assoc();
     
     if (!$result || $result['is_default']) {
-        return false; // Tidak bisa hapus kategori default atau milik orang lain
+        return false;
     }
     
     // Cek apakah kategori masih digunakan dalam transaksi
@@ -99,7 +94,7 @@ function deleteCategory($id, $user_id) {
     $result = $stmt->get_result()->fetch_assoc();
     
     if ($result['count'] > 0) {
-        return false; // Kategori masih digunakan
+        return false;
     }
     
     $stmt = $db->prepare("DELETE FROM categories WHERE id = ? AND user_id = ?");
